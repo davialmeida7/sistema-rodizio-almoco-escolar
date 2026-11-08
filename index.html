@@ -1,0 +1,1126 @@
+```html
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rodízio do Almoço</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    background:#f4f6f8;
+    color:#172033;
+    font:15px Arial,sans-serif
+}
+
+.wrap{
+    max-width:1000px;
+    margin:auto;
+    padding:25px 16px
+}
+
+.card{
+    background:white;
+    border:1px solid #ddd;
+    border-radius:14px;
+    padding:20px;
+    margin-bottom:16px
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px
+}
+
+h1{
+    margin:0 0 5px
+}
+
+h2{
+    font-size:18px
+}
+
+label{
+    font-weight:bold;
+    font-size:13px;
+    display:block;
+    margin:8px 0 5px
+}
+
+input,select{
+    width:100%;
+    padding:10px;
+    border:1px solid #bbb;
+    border-radius:8px;
+    font-size:15px
+}
+
+.row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px
+}
+
+button{
+    padding:11px 14px;
+    border:0;
+    border-radius:8px;
+    font-weight:bold;
+    cursor:pointer;
+    margin:5px 5px 0 0
+}
+
+.blue{
+    background:#2563eb;
+    color:white
+}
+
+.gray{
+    background:#e9edf2
+}
+
+.red{
+    background:#fee2e2;
+    color:#991b1b
+}
+
+.line{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    border:1px solid #e2e5e9;
+    border-radius:9px;
+    padding:11px;
+    margin:7px 0
+}
+
+.num{
+    width:28px;
+    height:28px;
+    border-radius:50%;
+    background:#eaf2ff;
+    color:#1759c7;
+    display:grid;
+    place-items:center;
+    font-weight:bold
+}
+
+.mon{
+    margin-left:auto;
+    color:#667085
+}
+
+.fixed{
+    font-size:11px;
+    color:#166534;
+    background:#ecfdf3;
+    padding:4px 7px;
+    border-radius:15px
+}
+
+.preview{
+    white-space:pre-wrap;
+    background:#101828;
+    color:white;
+    padding:15px;
+    border-radius:10px;
+    line-height:1.5;
+    font-family:Consolas,monospace
+}
+
+.note{
+    color:#667085;
+    font-size:13px;
+    line-height:1.5
+}
+
+.no-rotation{background:#fff7ed;border:1px solid #fed7aa;border-radius:9px;padding:10px;margin-top:10px;font-size:13px}
+
+.status{
+    background:#eef4ff;
+    border:1px solid #dbe7ff;
+    border-radius:9px;
+    padding:10px;
+    margin-top:10px;
+    font-size:13px
+}
+
+.modalbg{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:#0008;
+    align-items:center;
+    justify-content:center;
+    padding:20px
+}
+
+.modal{
+    background:white;
+    padding:20px;
+    border-radius:14px;
+    width:min(550px,100%);
+    max-height:90vh;
+    overflow:auto
+}
+
+.person{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin:7px 0
+}
+
+.hist{
+    padding:8px 0;
+    border-bottom:1px solid #eee
+}
+
+@media(max-width:700px){
+    .grid{
+        grid-template-columns:1fr
+    }
+
+    .row{
+        grid-template-columns:1fr
+    }
+
+    .mon{
+        font-size:12px
+    }
+
+    .line{
+        flex-wrap:wrap
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+<h1>🍽️ Rodízio do Almoço</h1>
+<p class="note">
+Sistema para controlar automaticamente o rodízio do horário do almoço.
+</p>
+
+<div class="grid">
+
+<div class="card">
+
+<h2>📅 Controle</h2>
+
+<div class="row">
+
+<div>
+<label>Data</label>
+<input id="date" type="date">
+</div>
+
+<div>
+<label>Quadra</label>
+
+<select id="quadra">
+<option>ABERTA</option>
+<option>FECHADA</option>
+<option>INDISPONÍVEL</option>
+</select>
+
+</div>
+
+</div>
+
+<div class="row">
+
+<div>
+<label>Início</label>
+<input id="inicio">
+</div>
+
+<div>
+<label>Fim</label>
+<input id="fim">
+</div>
+
+</div>
+
+<div id="status" class="status"></div>
+
+<div class="no-rotation">
+    <label style="margin-top:0">🚫 Dia sem rodízio</label>
+    <input id="noRotation" type="checkbox">
+    <span class="note">Marque quando não houve almoço/rodízio neste dia. Esse dia não será contado na próxima rotação.</span>
+</div>
+
+<button id="advance" class="blue">
+➡️ Avançar para o próximo dia letivo
+</button>
+
+<button id="edit" class="gray">
+👥 Editar monitores
+</button>
+
+</div>
+
+
+<div class="card">
+
+<h2>⚙️ Regras</h2>
+
+<p class="note">
+
+<b>6º ano A</b> e <b>6º ano B</b> são fixos.
+
+As outras 7 turmas fazem o rodízio.
+
+A cada novo <b>dia letivo</b>, a primeira turma das 7 turmas móveis vai para o final da fila.
+
+</p>
+
+<button id="copy" class="blue">
+📋 Copiar mensagem
+</button>
+
+<button id="reset" class="red">
+↩️ Restaurar início
+</button>
+
+</div>
+
+
+<div class="card">
+
+<h2 id="title"></h2>
+
+<div id="order"></div>
+
+</div>
+
+
+<div class="card">
+
+<h2>💬 Mensagem para WhatsApp</h2>
+
+<div id="preview" class="preview"></div>
+
+<button id="copy2" class="blue">
+📋 Copiar
+</button>
+
+</div>
+
+
+<div class="card">
+
+<h2>🕘 Histórico</h2>
+
+<div id="history"></div>
+
+</div>
+
+</div>
+</div>
+
+
+<div id="bg" class="modalbg">
+
+<div class="modal">
+
+<h2>👥 Editar monitores</h2>
+
+<p class="note">
+Troque o nome quando alguém faltar.
+Isso não altera o rodízio.
+</p>
+
+<div id="people"></div>
+
+<button id="save" class="blue">
+💾 Salvar
+</button>
+
+<button id="cancel" class="gray">
+Cancelar
+</button>
+
+</div>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   CONFIGURAÇÃO PRINCIPAL
+========================================================= */
+
+const K = "rodizio_escola_v4";
+
+
+const initial = {
+
+    /*
+      DATA DE INÍCIO DO RODÍZIO.
+
+      Nesta data a ordem das turmas móveis começa assim:
+      7º B
+      8º A
+      8º B
+      9º A
+      9º B
+      9º C
+      7º A
+    */
+    date:"2026-08-10",
+
+    quadra:"ABERTA",
+
+    inicio:"12h15min",
+
+    fim:"12h50min",
+
+
+    /* TURMAS QUE FAZEM RODÍZIO */
+
+    rotation:[
+        "7º ano B",
+        "8º ano A",
+        "8º ano B",
+        "9º ano A",
+        "9º ano B",
+        "9º ano C",
+        "7º ano A"
+    ],
+
+
+    /* MONITORES */
+
+    monitors:{
+        "6º ano A":"Monitor(a) 1",
+        "6º ano B":"Monitor(a) 2",
+        "7º ano A":"Monitor(a) 3",
+        "7º ano B":"Monitor(a) 4",
+        "8º ano A":"Monitor(a) 5",
+        "8º ano B":"Monitor(a) 6",
+        "9º ano A":"Monitor(a) 7",
+        "9º ano B":"Monitor(a) 8",
+        "9º ano C":"Monitor(a) 9"
+    },
+
+
+    history:[],
+
+    /* DIAS EM QUE NÃO HOUVE RODÍZIO.
+       Esses dias não avançam a ordem das turmas. */
+    noRotationDates:[
+        "2026-08-21"
+    ]
+
+};
+
+
+/* =========================================================
+   CARREGAR DADOS
+========================================================= */
+
+let saved = localStorage.getItem(K);
+
+let s = saved
+    ? JSON.parse(saved)
+    : JSON.parse(JSON.stringify(initial));
+
+if(!Array.isArray(s.noRotationDates)){
+    s.noRotationDates = [];
+}
+
+if(!s.noRotationDates.includes("2026-08-21")){
+    s.noRotationDates.push("2026-08-21");
+}
+
+
+/* =========================================================
+   FUNÇÕES AUXILIARES
+========================================================= */
+
+const $ = x => document.getElementById(x);
+
+
+function save(){
+
+    localStorage.setItem(K, JSON.stringify(s));
+
+}
+
+
+function dateBR(x){
+
+    if(!x) return "";
+
+    const p = x.split("-");
+
+    return p[2] + "/" + p[1] + "/" + p[0];
+
+}
+
+
+function esc(x){
+
+    return String(x)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;");
+
+}
+
+
+/*
+   Converte uma data YYYY-MM-DD
+   para objeto Date sem problemas de fuso.
+*/
+
+function makeDate(x){
+
+    const [ano,mes,dia] = x.split("-").map(Number);
+
+    return new Date(ano,mes-1,dia);
+
+}
+
+
+/*
+   Converte Date para YYYY-MM-DD
+*/
+
+function formatDate(d){
+
+    const ano = d.getFullYear();
+
+    const mes = String(d.getMonth()+1).padStart(2,"0");
+
+    const dia = String(d.getDate()).padStart(2,"0");
+
+    return `${ano}-${mes}-${dia}`;
+
+}
+
+
+/*
+   Verifica se é dia letivo.
+
+   0 = domingo
+   6 = sábado
+*/
+
+function isWeekday(d){
+
+    const day = d.getDay();
+
+    return day !== 0 && day !== 6;
+
+}
+
+
+/*
+   Retorna o próximo dia letivo.
+*/
+
+function nextSchoolDay(x){
+
+    let d = makeDate(x);
+
+    do{
+        d.setDate(d.getDate()+1);
+    }while(!isWeekday(d) || s.noRotationDates.includes(formatDate(d)));
+
+    return formatDate(d);
+
+}
+
+
+/*
+   Retorna o número de dias letivos entre duas datas.
+
+   Exemplo:
+
+   10/08 = 0
+   11/08 = 1
+   12/08 = 2
+
+   Sábado e domingo não entram na contagem.
+*/
+
+function schoolDaysBetween(start,end){
+
+    let a = makeDate(start);
+    const b = makeDate(end);
+
+    if(b <= a){
+        return 0;
+    }
+
+    let count = 0;
+
+    while(a < b){
+
+        a.setDate(a.getDate()+1);
+
+        const current = formatDate(a);
+
+        if(isWeekday(a) && !s.noRotationDates.includes(current)){
+            count++;
+        }
+
+    }
+
+    return count;
+
+}
+
+
+/* =========================================================
+   GERAÇÃO DO RODÍZIO
+========================================================= */
+
+
+/*
+   Esta é a parte principal corrigida.
+
+   O sistema NÃO depende mais de quantas vezes
+   o usuário apertou o botão.
+
+   Ele calcula a posição correta através da DATA.
+
+   Exemplo:
+
+   10/08
+   7B
+   8A
+   8B
+   9A
+   9B
+   9C
+   7A
+
+   11/08
+   8A
+   8B
+   9A
+   9B
+   9C
+   7A
+   7B
+
+   12/08
+   8B
+   9A
+   9B
+   9C
+   7A
+   7B
+   8A
+*/
+
+function getRotationForDate(date){
+
+    const base = [...initial.rotation];
+
+    const steps = schoolDaysBetween(initial.date,date);
+
+    if(steps <= 0){
+
+        return base;
+
+    }
+
+    const amount = steps % base.length;
+
+    return [
+        ...base.slice(amount),
+        ...base.slice(0,amount)
+    ];
+
+}
+
+
+/*
+   Monta a ordem completa.
+
+   Os dois primeiros são sempre fixos.
+*/
+
+function getOrder(){
+
+    const mobile = getRotationForDate(s.date);
+
+    return [
+        "6º ano A",
+        "6º ano B",
+        ...mobile
+    ];
+
+}
+
+
+/* =========================================================
+   RENDERIZAÇÃO
+========================================================= */
+
+function render(){
+
+    $("date").value = s.date;
+
+    $("quadra").value = s.quadra;
+
+    $("inicio").value = s.inicio;
+
+    $("fim").value = s.fim;
+
+
+    const o = getOrder();
+
+
+    $("title").textContent =
+        "📢 Ordem de liberação - " + dateBR(s.date);
+
+
+    $("order").innerHTML = o.map((c,i)=>{
+
+        return `
+        <div class="line">
+
+            <span class="num">
+                ${i+1}
+            </span>
+
+            <b>${esc(c)}</b>
+
+            <span class="mon">
+                Monitor(a):
+                <b>${esc(s.monitors[c] || "Não informado")}</b>
+            </span>
+
+            ${
+                i < 2
+                ? '<span class="fixed">FIXO</span>'
+                : ''
+            }
+
+        </div>
+        `;
+
+    }).join("");
+
+
+    /*
+       Informação de controle
+    */
+
+    const steps =
+        schoolDaysBetween(initial.date,s.date);
+
+
+    const isNoRotation = s.noRotationDates.includes(s.date);
+
+    $("noRotation").checked = isNoRotation;
+
+    $("status").innerHTML = isNoRotation
+        ? `<b>🚫 Sem rodízio nesta data.</b><br>Este dia não altera a ordem das turmas.`
+        : `<b>📆 Dia do rodízio:</b> ${steps + 1}º dia com rodízio desde o início.
+        <br>
+        <b>🔄 Avanços:</b> ${steps}
+        <br>
+        <b>📌 Próxima turma móvel:</b> ${getRotationForDate(s.date)[0]}`;
+
+
+    /*
+       Mensagem WhatsApp
+    */
+
+    let q =
+        s.quadra === "ABERTA"
+        ? "✅ ABERTA"
+        : "❌ " + s.quadra;
+
+
+    $("preview").textContent =
+
+        "📢 *ORDEM DE LIBERAÇÃO DO ALMOÇO - " +
+        dateBR(s.date) +
+        "*\n" +
+
+        o.map((c,i)=>{
+
+            return (
+                (i+1) +
+                "º | ⏰ *" +
+                c +
+                "* (Monitor(a): " +
+                (s.monitors[c] || "Não informado") +
+                ")"
+            );
+
+        }).join("\n") +
+
+        "\n*SITUAÇÃO DA QUADRA*\n" +
+
+        "*Status:* " +
+        q +
+        " - De " +
+        s.inicio +
+        " às " +
+        s.fim;
+
+
+    /*
+       Histórico
+    */
+
+    $("history").innerHTML =
+
+        s.history.length
+
+        ?
+
+        s.history
+        .slice()
+        .reverse()
+        .map(x=>{
+
+            return `
+            <div class="hist">
+
+                <b>${dateBR(x.date)}</b>
+
+                — primeira turma móvel:
+                ${esc(x.first)}
+
+            </div>
+            `;
+
+        }).join("")
+
+        :
+
+        '<span class="note">Nenhum avanço registrado.</span>';
+
+
+    save();
+
+}
+
+
+/* =========================================================
+   SINCRONIZAR CAMPOS
+========================================================= */
+
+function sync(){
+
+    s.date =
+        $("date").value || s.date;
+
+    s.quadra =
+        $("quadra").value;
+
+    s.inicio =
+        $("inicio").value;
+
+    s.fim =
+        $("fim").value;
+
+
+    render();
+
+}
+
+
+/* =========================================================
+   AVANÇAR PARA O PRÓXIMO DIA LETIVO
+========================================================= */
+
+$("advance").onclick = ()=>{
+
+    const nd = nextSchoolDay(s.date);
+
+    const atual =
+        getRotationForDate(s.date)[0];
+
+    const proxima =
+        getRotationForDate(nd)[0];
+
+
+    if(
+        confirm(
+            "Avançar para " +
+            dateBR(nd) +
+            "?\n\n" +
+
+            "Turma móvel atual: " +
+            atual +
+            "\n" +
+
+            "Próxima turma móvel: " +
+            proxima
+        )
+    ){
+
+        /*
+           Registra o avanço no histórico.
+        */
+
+        s.history.push({
+
+            date:s.date,
+
+            first:atual
+
+        });
+
+
+        /*
+           Limita histórico para evitar
+           crescimento desnecessário.
+        */
+
+        if(s.history.length > 100){
+
+            s.history =
+                s.history.slice(-100);
+
+        }
+
+
+        s.date = nd;
+
+
+        /*
+           IMPORTANTE:
+
+           Não mexemos em s.rotation.
+
+           A posição agora é calculada
+           automaticamente pela data.
+        */
+
+        render();
+
+    }
+
+};
+
+
+/* =========================================================
+   COPIAR MENSAGEM
+========================================================= */
+
+function copy(){
+
+    const t =
+        $("preview").textContent;
+
+
+    /*
+       Método moderno
+    */
+
+    if(navigator.clipboard){
+
+        navigator.clipboard.writeText(t)
+            .then(()=>{
+
+                alert("Mensagem copiada!");
+
+            })
+            .catch(()=>{
+
+                fallbackCopy(t);
+
+            });
+
+    }else{
+
+        fallbackCopy(t);
+
+    }
+
+}
+
+
+function fallbackCopy(t){
+
+    const n =
+        document.createElement("textarea");
+
+    n.value = t;
+
+    n.style.position = "fixed";
+
+    n.style.left = "-9999px";
+
+    document.body.appendChild(n);
+
+    n.select();
+
+    try{
+
+        document.execCommand("copy");
+
+        alert("Mensagem copiada!");
+
+    }catch(e){
+
+        prompt(
+            "Copie a mensagem:",
+            t
+        );
+
+    }
+
+    document.body.removeChild(n);
+
+}
+
+
+$("copy").onclick = copy;
+
+$("copy2").onclick = copy;
+
+
+/* =========================================================
+   CAMPOS
+========================================================= */
+
+["date","quadra","inicio","fim"]
+.forEach(id=>{
+
+    $(id).onchange = sync;
+
+});
+
+$("noRotation").onchange = ()=>{
+
+    const date = s.date;
+
+    if($("noRotation").checked){
+
+        if(!s.noRotationDates.includes(date)){
+            s.noRotationDates.push(date);
+        }
+
+    }else{
+
+        s.noRotationDates =
+            s.noRotationDates.filter(x=>x !== date);
+
+    }
+
+    render();
+
+};
+
+
+/* =========================================================
+   EDITAR MONITORES
+========================================================= */
+
+$("edit").onclick = ()=>{
+
+    $("people").innerHTML =
+
+        Object.keys(s.monitors)
+        .map(c=>{
+
+            return `
+            <div class="person">
+
+                <label>${esc(c)}</label>
+
+                <input
+                    data-c="${esc(c)}"
+                    value="${esc(s.monitors[c])}"
+                >
+
+            </div>
+            `;
+
+        }).join("");
+
+
+    $("bg").style.display = "flex";
+
+};
+
+
+$("cancel").onclick = ()=>{
+
+    $("bg").style.display = "none";
+
+};
+
+
+$("save").onclick = ()=>{
+
+    $("people")
+    .querySelectorAll("input")
+    .forEach(i=>{
+
+        s.monitors[i.dataset.c] =
+            i.value.trim() ||
+            "Não informado";
+
+    });
+
+
+    $("bg").style.display = "none";
+
+
+    render();
+
+
+    alert("Monitores atualizados!");
+
+};
+
+
+/* =========================================================
+   RESTAURAR CONFIGURAÇÃO ORIGINAL
+========================================================= */
+
+$("reset").onclick = ()=>{
+
+    if(
+        confirm(
+            "Restaurar a configuração inicial de 10/08/2026?\n\n" +
+            "Isso apagará o histórico."
+        )
+    ){
+
+        s =
+            JSON.parse(
+                JSON.stringify(initial)
+            );
+
+
+        render();
+
+    }
+
+};
+
+
+/* =========================================================
+   INICIALIZAÇÃO
+========================================================= */
+
+render();
+
+</script>
+
+</body>
+</html>
+```
